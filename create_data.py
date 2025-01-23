@@ -1,0 +1,148 @@
+from dynamixel_sdk import * 
+import numpy as np
+import argparse
+import time
+from reskin_sensor import ReSkinProcess
+import os
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+import sys
+import pygame
+from datetime import datetime
+import argparse
+
+
+def get_baseline():
+        baseline_data = sensor_stream.get_data(num_samples=5)
+        baseline_data = np.array(baseline_data)[:, 1:]
+        baseline = np.mean(baseline_data, axis=0)
+        return baseline
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test code to run a AnySkin streaming process in the background. Allows data to be collected without code blocking")
+    parser.add_argument("-p", "--port", type=str, help="port to which the microcontroller is connected", default="/dev/cu.usbmodem101")
+    parser.add_argument("-f", "--file", type=str, help="path to load data from", default=None)
+    parser.add_argument("-v", "--viz_mode", type=str, help="visualization mode", default="3axis", choices=["magnitude", "3axis"])
+    parser.add_argument("-s", "--scaling", type=float, help="scaling factor for visualization", default=7.0)
+    parser.add_argument('-r', '--record', action='store_true', help='record data')
+    args = parser.parse_args()
+
+    file = None
+    sensor_stream = ReSkinProcess(
+            num_mags=20,
+            port=args.port,
+        )
+    # start sensor stream
+    sensor_stream.start()
+    time.sleep(1.0)
+    filename = "data/data_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    pygame.init()
+    time.sleep(0.1)
+    baseline = get_baseline()
+
+    # addresses
+    ADDR_TORQUE_ENABLE = 64
+    ADDR_GOAL_POSITION = 116
+    ADDR_PRESENT_POSITION = 132
+    DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    BAUDRATE = 3000000
+    PORT = '/dev/tty.usbserial-FT7WBF78'  # port 
+    THRESHOLD = 50
+
+    portHandler = PortHandler(PORT)
+    packetHandler = PacketHandler(2.0)
+
+
+    # open port
+    if not portHandler.openPort():
+        print("Failed to open port")
+        quit()
+
+    # baudrate
+    if not portHandler.setBaudRate(BAUDRATE):
+        print("Failed to set baudrate")
+        quit()
+
+    # enable torque
+    for i in range (16):
+        dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 1)
+        if dxl_comm_result != COMM_SUCCESS:
+            print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+            quit()
+        elif dxl_error != 0:
+            print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+            quit()
+
+    print("connected")
+
+    n = 10
+    goal_position = np.array([
+        [1600, 2200, 2800, 1200, 1700, 2800, 2300, 900, 2300, 2400, 2000, 800, 2700, 2000, 2400, 1900],
+        [1700, 2500, 2700, 1000, 1750, 2500, 2000, 1400, 1800, 2200, 2800, 800, 2700, 2000, 2200, 1400],
+        ])
+    data = []
+    data_len = 30000
+    for j in range(0, 2):
+        #move: write pos
+        for i in range(16):
+            dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, goal_position[j][i])
+            if dxl_comm_result != COMM_SUCCESS:
+                print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+            elif dxl_error != 0:
+                print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+        print("Goal position set. Waiting for movement...")
+        
+        b = False
+        while b == False:
+            b = True
+            for i in range(16):
+                dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
+                time.sleep(0.05)
+                if dxl_comm_result != COMM_SUCCESS:
+                    print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+                elif dxl_error != 0:
+                    print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+                if abs(goal_position[j][i] - dxl_present_position) > THRESHOLD:
+                    b = False
+
+        #get sensor data
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_b:
+                    # Recalculate baseline
+                    baseline_data = sensor_stream.get_data(num_samples=5)
+                    baseline_data = np.array(baseline_data)[:, 1:]
+                    baseline = np.mean(baseline_data, axis=0)
+
+        data1 = []
+        if file is not None:
+            load_data = np.loadtxt(file)
+            sensor_data = load_data[data_len]
+            data_len += 24
+            baseline = np.zeros_like(sensor_data)
+            for x in sensor_data - baseline:
+                data1.append(x)
+            for i in range(16):
+                data1.append(goal_position[j][i])
+        else:
+            sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
+            for x in sensor_data - baseline:
+                data1.append(x)
+            for i in range(16):
+                data1.append(goal_position[j][i])
+            data.append(np.array(data1))
+
+    print("moved")
+    if file is None:
+        sensor_stream.pause_streaming()
+        sensor_stream.join()
+        data = np.array(data)
+        np.savetxt(f"{filename}.txt", data)
+
+
+    # disable torque
+    for i in range(16):
+        packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 0)
+
+    # close port
+    portHandler.closePort()
