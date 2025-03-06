@@ -24,13 +24,13 @@ class TextDataset(Dataset):
                 self.data.append([float(x) for x in line.strip().split(" ")])
         self.data = torch.tensor(self.data, dtype=torch.float32)
         
-        self.inputs = self.data[:, 60:]
-        self.outputs = self.data[:, :60]
+        self.inputs = self.data[:, 30:]
+        self.outputs = self.data[:, :30]
         self.outputs -= self.outputs[0]
-
+        print(self.outputs.min())
         self.inputs = 2 * (self.inputs - 1800) / (3100 - 1800) - 1 
-        self.outputs = 2 * (self.outputs + 600) / (1200) - 1 #scale iwth -600 to 600, 1800 - 3100
-        
+        self.outputs = 2 * (self.outputs + 250) / 650 - 1 #scale iwth -250 to 350, 1800 - 3100
+
 
     def __len__(self):
         return len(self.data)
@@ -43,13 +43,13 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(16, 128),
+            nn.Linear(8, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 60)
+            nn.Linear(128, 30)
         )
 
     def forward(self, x):
@@ -60,13 +60,11 @@ model = NeuralNetwork().to(device)
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1.0)
+optimizer = torch.optim.SGD(model.parameters(), lr=1)
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
-    tot_loss = 0
-    cnt = 0
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(device), y.to(device)
         optimizer.zero_grad()
@@ -75,81 +73,73 @@ def train(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
-        tot_loss += loss.item()
-        cnt += 1
-    return tot_loss / cnt
+        loss, current = loss.item(), (batch + 1) * len(X)
+        # print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
 def test(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
+    num_batches = len(dataloader)
     model.eval()
-    test_loss = 0
-    cnt = 0
+    test_loss =  0
     pval = []
     with torch.no_grad():
         for X, y in dataloader:
-            cnt += 1
             X, y = X.to(device), y.to(device)
             pred = model(X)
             pval.append(pred.cpu().numpy())
             test_loss += loss_fn(pred, y).item()
+    test_loss /= num_batches
     pval = np.concatenate(pval, axis = 0)
 
     print(f"Test Error: \n Avg loss: {test_loss} \n")
-    return test_loss / cnt
+    return pval
 
 def gety(dataloader):
-    yval = None
+    yval = []
     with torch.no_grad():
         for X, y in dataloader:
             y = y.to(device)
-            # y = y.cpu().numpy() #want tensor instead of numpy
-            if yval == None:
-                yval = y
+            y = y.cpu().numpy()
+            yval.append(y)
+    yval = np.concatenate(yval, axis = 0)
     return yval
 
 
-if __name__ == "__main__":
-    # #first 80% and last 20% split
-    # training_data = TextDataset("fullmodeldata/fullrandcont.txt")
-    # test_data = TextDataset("fullmodeldata/temp.txt")
 
-    #random split 80/20
-    # datas = TextDataset("fullmodeldata/fullrandcont.txt")
+if __name__ == "__main__":
+    # datas = TextDataset("2fmodeldata/2frandcontdata.txt")
     # trainsiz = int(0.8 * len(datas))
     # training_data, test_data = random_split(datas, [trainsiz, len(datas) - trainsiz])
-    #
-    # with open("fullmodeldata/train.txt", "w") as f:
+
+    # with open("2fmodeldata/train2f.txt", "w") as f:
     #     for i in training_data.indices: 
     #         data_row = datas.data[i].tolist()
     #         f.write(" ".join(map(str, data_row)) + "\n")
-    # with open("fullmodeldata/test.txt", "w") as f:
+    # with open("test.txt", "w") as f:
     #     for i in test_data.indices:
     #         data_row = datas.data[i].tolist()
     #         f.write(" ".join(map(str, data_row)) + "\n")
-
-    training_data = TextDataset("fullmodeldata/train.txt")
-    test_data = TextDataset("fullmodeldata/test.txt")
-
+    training_data = TextDataset("2fingermodel/2fmodeldata/2frandcontdata.txt")
+    test_data = TextDataset("2fingermodel/2fmodeldata/test.txt")
 
     train_dataloader = DataLoader(training_data, batch_size=100)
     test_dataloader = DataLoader(test_data, batch_size=100)
 
-    train_error = []
-    test_error = []
-
-    epochs = 2317
+    epochs = 1000
     for t in range(epochs):
-        lc = train(train_dataloader, model, loss_fn, optimizer)
-        if (t % 50 == 0): 
-            test_error.append(test(test_dataloader, model, loss_fn))
-            train_error.append(lc)
-  
-    # t = np.zeros(60)
-    # for i in range(60): t[i] = i
+        train(train_dataloader, model, loss_fn, optimizer)
+        if (t % 50 == 0): test(test_dataloader, model, loss_fn)
 
-    # plt.plot(t, test_error, label = "test error", linestyle="-.")
-    # plt.plot(t, train_error, label = "training loss", linestyle="-")
+    torch.save(model.state_dict(), "2fmodelact1.pth") 
+
+    # res = test(test_dataloader, model, loss_fn).T
+    # act = gety(test_dataloader).T
+    # t = np.zeros(len(res[0]))
+    # for i in range(len(res[0])):
+    #     t[i] = i
+    # plt.plot(t, res[3], label = "predicted", linestyle="-.")
+    # plt.plot(t, act[3], label = "actual", linestyle="-")
     # plt.legend()
     # plt.show()
 
-    torch.save(model.state_dict(), "fullmodelrs0.pth") 
+    

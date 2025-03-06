@@ -11,7 +11,6 @@ from datetime import datetime
 import argparse
 import random
 
-random.seed(15)
 
 def get_baseline():
         baseline_data = sensor_stream.get_data(num_samples=5)
@@ -37,7 +36,7 @@ if __name__ == "__main__":
     # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
-    filename = "fullmodeldata/testdata1"
+    filename = "datadata"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -50,18 +49,23 @@ if __name__ == "__main__":
     DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     BAUDRATE = 3000000
     PORT = '/dev/tty.usbserial-FT7WBF78'  # port 
-    THRESHOLD = 50
+    THRESHOLD = 10
 
     portHandler = PortHandler(PORT)
     packetHandler = PacketHandler(2.0)
 
+
+    # open port
     if not portHandler.openPort():
         print("Failed to open port")
         quit()
+
+    # baudrate
     if not portHandler.setBaudRate(BAUDRATE):
         print("Failed to set baudrate")
         quit()
 
+    # enable torque
     for i in range (16):
         dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 1)
         dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_PROFILE_VELOCITY, 60)
@@ -75,53 +79,60 @@ if __name__ == "__main__":
     print("connected")
 
     posrange = np.array([[1918, 1918], #here
-                 [2400, 2900], #2000
+                 [2400, 2900], 
                  [1800, 2600],
                  [2900, 3900],
                  [2058, 2058], #here
-                 [2400, 2900], #
-                 [1800, 2600],
-                 [2900, 3900],
+                 [2000, 2000], #
+                 [1800, 1800],
+                 [2900, 2900],
                  [2155, 2155], #here
-                 [2400, 3100],
-                 [1900, 2400],
-                 [2000, 3000],
+                 [2000, 2000],
+                 [1800, 1800],
+                 [2000, 2000],
                  [1884, 1884], #here
-                 [2100, 4000],
+                 [2100, 4000], #2100, 4000 for random
                  [2100, 2100], #here
                  [2200, 3100]
         ])
+    
     firstpos = np.array([1918, 2662, 2427, 3886, 2058, 2595, 2010, 3600, 2155, 2536, 2250, 2444, 1884, 3466, 2100, 2594])
 
-    
-
+#2, 3, 15
     data = []
     data_len = 3000000
     last = np.zeros(16).astype(int)
-    for j in range(10):
+    for j in range(80):
         maxi = 20
         posn = np.zeros(16).astype(int)
         for i in range(16):
             posn[i] = random.randint(posrange[i][0], posrange[i][1])
             if (j > 0): maxi = max(maxi, abs(last[i] - posn[i]))
-        if j == 0:
-            posn = firstpos
-
+        if j == 0: posn = firstpos
+        
         num = int(maxi / 20)
+        print(j)
         for k in range(1, num + 1):
             pos = np.zeros(16).astype(int)
             for i in range(16):
                 pos[i] = last[i] + (posn[i] - last[i]) * k / num
 
             #move: write pos
-            for i in range(16):
-                dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, pos[i])
-                if dxl_comm_result != COMM_SUCCESS:
-                    print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
-                elif dxl_error != 0:
-                    print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
-            
+            failed = True
+            while failed == True:
+                failed = False
+                for i in range(16):
+                    dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, pos[i])
+                    if dxl_comm_result != COMM_SUCCESS:
+                        print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+                        failed = True
+                    elif dxl_error != 0:
+                        print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+                if failed == True:
+                    time.sleep(300)
+
             b = False
+            actpos = pos
             while b == False:
                 b = True
                 for i in range(16):
@@ -130,6 +141,7 @@ if __name__ == "__main__":
                         print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
                     elif dxl_error != 0:
                         print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+                    actpos[i] = dxl_present_position
                     if abs(pos[i] - dxl_present_position) > THRESHOLD:
                         b = False
 
@@ -148,29 +160,37 @@ if __name__ == "__main__":
                 sensor_data = load_data[data_len]
                 data_len += 24
                 baseline = np.zeros_like(sensor_data)
-                for x in sensor_data - baseline:
-                    data1.append(x)
-                for i in range(16):
-                    data1.append(pos[i])
+                sensor_data = sensor_data - baseline
+                for x in range(30):
+                    data1.append(sensor_data[x]) 
+                for x in range(4): data1.append(actpos[x])
+                for x in range(12, 16): data1.append(actpos[x])
             else:
                 sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
-                # print(sensor_data)
-                for x in sensor_data - baseline:
-                    data1.append(x)
-                for i in range(16):
-                    data1.append(pos[i])
+                sensor_data = sensor_data - baseline
+                for x in range(30):
+                    data1.append(sensor_data[x])
+                for x in range(4): data1.append(actpos[x])
+                for x in range(12, 16): data1.append(actpos[x])
                 data.append(np.array(data1))
-        for i in range(16): 
+                # print(data)
+        for i in range(16):
             last[i] = posn[i]
 
+    print("moved")
     if file is None:
         sensor_stream.pause_streaming()
         sensor_stream.join()
         data = np.array(data)
+        print(data)
+        print(baseline)
         np.savetxt(f"{filename}.txt", data)
 
+    print(data.shape)
 
+    # disable torque
     for i in range(16):
         packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 0)
 
+    # close port
     portHandler.closePort() 
