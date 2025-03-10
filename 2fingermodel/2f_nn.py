@@ -27,10 +27,13 @@ class TextDataset(Dataset):
         self.inputs = self.data[:, 30:]
         self.outputs = self.data[:, :30]
         self.outputs -= self.outputs[0]
-        print(self.outputs.min())
+        
+        print(self.outputs[0])
+        print(self.outputs.max())
+        
         self.inputs = 2 * (self.inputs - 1800) / (3100 - 1800) - 1 
-        self.outputs = 2 * (self.outputs + 250) / 650 - 1 #scale iwth -250 to 350, 1800 - 3100
-
+        self.outputs = 2 * (self.outputs + 100) / 350 - 1 #scale iwth -100 to 250, 1800 - 3100
+        
 
     def __len__(self):
         return len(self.data)
@@ -60,7 +63,7 @@ model = NeuralNetwork().to(device)
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.7)
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -119,27 +122,29 @@ if __name__ == "__main__":
     #     for i in test_data.indices:
     #         data_row = datas.data[i].tolist()
     #         f.write(" ".join(map(str, data_row)) + "\n")
-    training_data = TextDataset("2fingermodel/2fmodeldata/2frandcontdata.txt")
-    test_data = TextDataset("2fingermodel/2fmodeldata/test.txt")
+    training_data = TextDataset("2fingermodel/2fmodeldata/moredata.txt")
+    test_data = TextDataset("2fingermodel/2fmodeldata/moredata.txt")
 
     train_dataloader = DataLoader(training_data, batch_size=100)
     test_dataloader = DataLoader(test_data, batch_size=100)
+    
+    print(gety(test_dataloader))
 
-    epochs = 1000
+    epochs = 2000
     for t in range(epochs):
         train(train_dataloader, model, loss_fn, optimizer)
         if (t % 50 == 0): test(test_dataloader, model, loss_fn)
 
-    torch.save(model.state_dict(), "2fmodelact1.pth") 
+    torch.save(model.state_dict(), "2fmodelmore.pth") 
 
-    # res = test(test_dataloader, model, loss_fn).T
-    # act = gety(test_dataloader).T
-    # t = np.zeros(len(res[0]))
-    # for i in range(len(res[0])):
-    #     t[i] = i
-    # plt.plot(t, res[3], label = "predicted", linestyle="-.")
-    # plt.plot(t, act[3], label = "actual", linestyle="-")
-    # plt.legend()
-    # plt.show()
+    res = test(test_dataloader, model, loss_fn).T
+    act = gety(test_dataloader).T
+    t = np.zeros(len(res[0]))
+    for i in range(len(res[0])):
+        t[i] = i
+    plt.plot(t, res[3], label = "predicted", linestyle="-.")
+    plt.plot(t, act[3], label = "actual", linestyle="-")
+    plt.legend()
+    plt.show()
 
     
