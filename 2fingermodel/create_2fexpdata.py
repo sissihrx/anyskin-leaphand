@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
-    filename = "2fingermodel/2fmodeldata/2fnocontactdata"
+    filename = "2fingermodel/2fmodeldata/testtest"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         for x in range(4): data1.append(actpos[x])
         for x in range(12, 16): data1.append(actpos[x])
         data.append(np.array(data1))
-        last = posn
+        last = posn.copy()
 
     
     sensor_stream.pause_streaming()

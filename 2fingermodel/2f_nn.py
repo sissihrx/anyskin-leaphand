@@ -26,7 +26,7 @@ class TextDataset(Dataset):
         
         self.inputs = self.data[:, 30:]
         self.outputs = self.data[:, :30]
-        self.outputs -= self.outputs[0]
+        self.outputs = self.outputs - self.outputs[0]
         
         print(self.outputs[0])
         print(self.outputs.max())
@@ -110,19 +110,7 @@ def gety(dataloader):
 
 
 if __name__ == "__main__":
-    # datas = TextDataset("2fmodeldata/2frandcontdata.txt")
-    # trainsiz = int(0.8 * len(datas))
-    # training_data, test_data = random_split(datas, [trainsiz, len(datas) - trainsiz])
-
-    # with open("2fmodeldata/train2f.txt", "w") as f:
-    #     for i in training_data.indices: 
-    #         data_row = datas.data[i].tolist()
-    #         f.write(" ".join(map(str, data_row)) + "\n")
-    # with open("test.txt", "w") as f:
-    #     for i in test_data.indices:
-    #         data_row = datas.data[i].tolist()
-    #         f.write(" ".join(map(str, data_row)) + "\n")
-    training_data = TextDataset("2fingermodel/2fmodeldata/moredata.txt")
+    training_data = TextDataset("2fingermodel/2fmodeldata/datadata.txt")
     test_data = TextDataset("2fingermodel/2fmodeldata/moredata.txt")
 
     train_dataloader = DataLoader(training_data, batch_size=100)
@@ -130,12 +118,12 @@ if __name__ == "__main__":
     
     print(gety(test_dataloader))
 
-    epochs = 2000
+    epochs = 1000
     for t in range(epochs):
         train(train_dataloader, model, loss_fn, optimizer)
         if (t % 50 == 0): test(test_dataloader, model, loss_fn)
 
-    torch.save(model.state_dict(), "2fmodelmore.pth") 
+    torch.save(model.state_dict(), "2fingermodel/2fmodels/2fmodeltest.pth") 
 
     res = test(test_dataloader, model, loss_fn).T
     act = gety(test_dataloader).T

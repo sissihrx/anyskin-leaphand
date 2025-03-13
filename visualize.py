@@ -26,7 +26,7 @@ class TextDataset(Dataset):
         
         self.inputs = self.data[:, 30:]
         self.outputs = self.data[:, :30]
-        self.outputs -= self.outputs[0]
+        self.outputs = self.outputs - self.outputs[0]
         
         self.inputs = 2 * (self.inputs - 1800) / (3100 - 1800) - 1 
         # self.outputs = 2 * (self.outputs + 100) / 350 - 1 #scale iwth -100 to 250, 1800 - 3100
@@ -79,7 +79,7 @@ def test(dataloader, model, loss_fn):
 
     print(f"Test Error: \n Avg loss: {test_loss} \n")
     # return pval
-    return (pval + 1) * 250 / 2 - 100
+    return (pval + 1) * 350 / 2 - 100
 
 def gety(dataloader):
     yval = []
@@ -94,15 +94,15 @@ def gety(dataloader):
 
 
 if __name__ == "__main__":
-    test_data = TextDataset("2fingermodel/2fmodeldata/moredata.txt")#503
+    test_data = TextDataset("2fingermodel/2fmodeldata/randomtestdata.txt")#503
     test_dataloader = DataLoader(test_data, batch_size=100)
 
-    model.load_state_dict(torch.load("2fingermodel/2fmodels/2fmodelact1.pth", map_location = 'cpu'))
+    model.load_state_dict(torch.load("2fingermodel/2fmodels/2fmodelmore.pth", map_location = 'cpu'))
     res = test(test_dataloader, model, loss_fn)
     act = gety(test_dataloader)
     
-    
     print(res[0])
+    print(act[0])
     # res += act[0]
     res = res.T
     act = act.T
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         t[i] = i
 
     fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7))
-    n = 15
+    n = 0
     for i in range(3):
         for j in range(5):
             axes[i][j].plot(t, res[n], label = "predicted", linestyle="-.")
@@ -122,9 +122,9 @@ if __name__ == "__main__":
             plt.legend()
 
     fig.canvas.draw()
-    # for i in range(3):
-    #     for j in range(5):
-    #         axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -50), max(axes[i][j].get_ylim()[1], 50))
+    for i in range(3):
+        for j in range(5):
+            axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -20), max(axes[i][j].get_ylim()[1], 20))
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig("img")

@@ -11,7 +11,6 @@ from datetime import datetime
 import argparse
 import random
 
-random.seed(15)
 
 def get_baseline():
         baseline_data = sensor_stream.get_data(num_samples=5)
@@ -37,7 +36,7 @@ if __name__ == "__main__":
     # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
-    filename = "2fingermodel/2fmodeldata/newdata"
+    filename = "testdata"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -49,7 +48,7 @@ if __name__ == "__main__":
     ADDR_PRESENT_POSITION = 132
     DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     BAUDRATE = 3000000
-    PORT = '/dev/ttyUSB0'  # port 
+    PORT = '/dev/ttyUSB0'  
     THRESHOLD = 20
 
     portHandler = PortHandler(PORT)
@@ -103,7 +102,7 @@ if __name__ == "__main__":
     data = []
     data_len = 3000000
     last = np.zeros(16).astype(int)
-    for j in range(1000):
+    for j in range(30):
         maxi = 20
         posn = np.zeros(16).astype(int)
         for i in range(16):
@@ -113,69 +112,59 @@ if __name__ == "__main__":
         
         num = int(maxi / 20)
         print(j)
-        temp = last.copy()
-        for s in range(2):
-            for k in range(1, num + 1):
-                if j == 0: pos = posn.copy()
-                else:
-                    pos = temp.copy()
-                    if s == 0:
-                        for i in range(12): pos[i] = last[i] + (posn[i] - last[i]) * k / num
-                    else: 
-                        for i in range(12, 16): pos[i] = last[i] + (posn[i] - last[i]) * k / num
-                    
-                # print(pos)
-                # print(last)
-                # int(input())
-                #move: write pos
-                failed = True
-                while failed == True:
-                    failed = False
-                    for i in range(16):
-                        dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, pos[i])
-                        if dxl_comm_result != COMM_SUCCESS:
-                            print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
-                            failed = True
-                        elif dxl_error != 0:
-                            print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
-                    if failed == True:
-                        time.sleep(300)
+        for k in range(1, num + 1):
+            pos = np.zeros(16).astype(int)
+            for i in range(16):
+                pos[i] = last[i] + (posn[i] - last[i]) * k / num
 
-                b = False
-                actpos = pos.copy()
-                while b == False:
-                    b = True
-                    for i in range(16):
+            #move: write pos
+            failed = True
+            while failed == True:
+                failed = False
+                for i in range(16):
+                    dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, pos[i])
+                    if dxl_comm_result != COMM_SUCCESS:
+                        print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
                         failed = True
-                        while failed == True:
-                            failed = False
-                            dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
-                            if dxl_comm_result != COMM_SUCCESS:
-                                print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
-                                failed = True
-                            elif dxl_error != 0:
-                                print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
-                            if failed == True:
-                                time.sleep(300)
-                        actpos[i] = dxl_present_position
-                        if abs(pos[i] - dxl_present_position) > THRESHOLD:
-                            b = False
-                
-                # get sensor data
-                data1 = []
-                sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
-                sensor_data = sensor_data - baseline
-                for i in range(30): data1.append(sensor_data[i])
-                for i in range(4): data1.append(actpos[i])
-                for i in range(12, 16): data1.append(actpos[i])
-                data.append(np.array(data1))
-            temp = pos
-        last = posn
-    
-    sensor_stream.pause_streaming()
-    sensor_stream.join()
-    data = np.array(data)
-    np.savetxt(f"{filename}.txt", data)
+                    elif dxl_error != 0:
+                        print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+                if failed == True:
+                    time.sleep(300)
+
+            b = False
+            actpos = pos.copy()
+            while b == False:
+                b = True
+                for i in range(16):
+                    dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
+                    if dxl_comm_result != COMM_SUCCESS:
+                        print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+                    elif dxl_error != 0:
+                        print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+                    actpos[i] = dxl_present_position
+                    if abs(pos[i] - dxl_present_position) > THRESHOLD:
+                        b = False
+
+            # get sensor data
+            data1 = []
+            sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
+            sensor_data = sensor_data - baseline
+            for x in range(30):
+                data1.append(sensor_data[x])
+            for x in range(4): data1.append(actpos[x])
+            for x in range(12, 16): data1.append(actpos[x])
+            data.append(np.array(data1))
+            # print(data)
+        last = posn.copy()
+
+    print("moved")
+    if file is None:
+        sensor_stream.pause_streaming()
+        sensor_stream.join()
+        data = np.array(data)
+        print(data)
+        print(baseline)
+        np.savetxt(f"{filename}.txt", data)
 
     print(data.shape)
 
