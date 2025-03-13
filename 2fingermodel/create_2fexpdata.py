@@ -99,6 +99,7 @@ if __name__ == "__main__":
     for j in range(-1, 300):
         posn = np.zeros(16).astype(int)
         if j == -1:
+        # if (j < 10):
             posn = firstpos
             print(posn)
         elif j % 100 < 50:
