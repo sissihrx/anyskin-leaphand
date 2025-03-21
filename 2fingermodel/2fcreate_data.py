@@ -11,6 +11,7 @@ from datetime import datetime
 import argparse
 import random
 
+random.seed(17)
 
 def get_baseline():
         baseline_data = sensor_stream.get_data(num_samples=5)
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
-    filename = "testdata"
+    filename = "randomtestdatanew"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     data = []
     data_len = 3000000
     last = np.zeros(16).astype(int)
-    for j in range(30):
+    for j in range(20):
         maxi = 20
         posn = np.zeros(16).astype(int)
         for i in range(16):

@@ -15,6 +15,9 @@ device = (
         else "cpu"
     )
 
+# inscale = torch.tensor([1922, 2902, 2597, 3897, 1891, 3998, 2104, 3099])
+# outscale = torch.tensor([64.8, 65.7, 185.37, 60, 71, 173, 67.5, 67.8, 182.46, 56.1, 72.6, 163.1, 63, 82, 208, 106, 67.8, 108, 97, 54, 97, 95, 113, 115, 95, 86, 95, 62, 123, 138])
+        
 
 class TextDataset(Dataset):
     def __init__(self, file_path):
@@ -24,14 +27,17 @@ class TextDataset(Dataset):
                 self.data.append([float(x) for x in line.strip().split(" ")])
         self.data = torch.tensor(self.data, dtype=torch.float32)
         
-        self.inputs = self.data[:, 30:]
-        self.outputs = self.data[:, :30]
-        self.outputs = self.outputs - self.outputs[0]
+        self.inputs = self.data[:, 60:]
+        self.outputs = self.data[:, :60]
+        baseline = (self.outputs[0] + self.outputs[1] + self.outputs[2] + self.outputs[3] + self.outputs[4]) / 5
+        self.outputs = self.outputs - baseline
         
-        self.inputs = 2 * (self.inputs - 1800) / (3100 - 1800) - 1 
-        # self.outputs = 2 * (self.outputs + 100) / 350 - 1 #scale iwth -100 to 250, 1800 - 3100
+        # self.inputs = self.inputs / inscale
+        # self.outputs = self.outputs / outscale
         
-
+        self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
+        self.outputs = 2 * (self.outputs + 600) / 1200 - 1 #scale iwth -600 to 600, 1800 - 4000
+        
     def __len__(self):
         return len(self.data)
 
@@ -43,13 +49,13 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(8, 128),
+            nn.Linear(16, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 30)
+            nn.Linear(128, 60)
         )
 
     def forward(self, x):
@@ -78,8 +84,8 @@ def test(dataloader, model, loss_fn):
     pval = np.concatenate(pval, axis = 0)
 
     print(f"Test Error: \n Avg loss: {test_loss} \n")
-    # return pval
-    return (pval + 1) * 350 / 2 - 100
+    return (pval + 1) / 2 * 1200 - 600
+    # return pval * np.array(outscale)
 
 def gety(dataloader):
     yval = []
@@ -89,42 +95,45 @@ def gety(dataloader):
             y = y.cpu().numpy()
             yval.append(y)
     yval = np.concatenate(yval, axis = 0)
-    return yval
+    return (yval + 1) / 2 * 1200 - 600
 
 
 
 if __name__ == "__main__":
-    test_data = TextDataset("2fingermodel/2fmodeldata/randomtestdata.txt")#503
+    test_data = TextDataset("fullmodeldata/fullnocontact.txt")
     test_dataloader = DataLoader(test_data, batch_size=100)
-
-    model.load_state_dict(torch.load("2fingermodel/2fmodels/2fmodelmore.pth", map_location = 'cpu'))
-    res = test(test_dataloader, model, loss_fn)
-    act = gety(test_dataloader)
     
-    print(res[0])
-    print(act[0])
-    # res += act[0]
-    res = res.T
-    act = act.T
+    t1 = TextDataset("fullmodeldata/fullnocontact.txt")
+    td1 = DataLoader(t1, batch_size=100)
+
+    model.load_state_dict(torch.load("fullmodel.pth", map_location = 'cpu'))
+    b = test(test_dataloader, model, loss_fn)
+    a = gety(test_dataloader)
     
-
-    t = np.zeros(len(res[0]))
-    for i in range(len(res[0])):
-        t[i] = i
-
+    tr1 = gety(td1).T
+    
+    # diff = a - b
+    # ans = x + diff
+    # ans = ans.T
+    
+    a = a.T
+    b = b.T
+    print(b[0])
+    
     fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7))
-    n = 0
+    n = 30
     for i in range(3):
         for j in range(5):
-            axes[i][j].plot(t, res[n], label = "predicted", linestyle="-.")
-            axes[i][j].plot(t, act[n], label = "actual", linestyle="-")
+            axes[i][j].plot(b[n], label = "predicted", linestyle="--")
+            axes[i][j].plot(a[n], label = "actual", linestyle="-")
+            # axes[i][j].plot(tr1[n], label = "predicted", linestyle="-.")
             n += 1
             plt.legend()
 
     fig.canvas.draw()
     for i in range(3):
         for j in range(5):
-            axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -20), max(axes[i][j].get_ylim()[1], 20))
+            axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -30), max(axes[i][j].get_ylim()[1], 30))
 
     plt.tight_layout()
     plt.savefig("img")

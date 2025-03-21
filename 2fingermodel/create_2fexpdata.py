@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
-    filename = "2fingermodel/2fmodeldata/testtest"
+    filename = "2fingermodel/2fmodeldata/0skin"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                  [1800, 1800],
                  [2000, 2000],
                  [1884, 1884], #here
-                 [2100, 4000], #2100, 4000 for random
+                 [2100, 4000], 
                  [2100, 2100], #here
                  [2200, 3100]
         ])
@@ -98,20 +98,24 @@ if __name__ == "__main__":
     last = np.zeros(16).astype(int)
     for j in range(-1, 300):
         posn = np.zeros(16).astype(int)
-        if j == -1:
+        if j < 0:
         # if (j < 10):
             posn = firstpos
             print(posn)
         elif j % 100 < 50:
-            for i in range(16): posn[i] = (posrange[i][0] + posrange[i][1]) / 2
+            for i in range(16): posn[i] = 3 * posrange[i][1] / 4 + posrange[i][0] / 4
             posn[1] = posrange[1][0] + (j % 50) * (2900 - posrange[1][0]) / 50
             posn[2] = posrange[2][0] + (j % 50) * (2130 - posrange[2][0]) / 50        
             posn[3] = posrange[3][0] + (j % 50) * (3270 - posrange[3][0]) / 50
+            # posn[15] = posrange[1][0] + (j % 50) * (2900 - posrange[1][0]) / 50
+            # posn[13] = posrange[2][0] + (j % 50) * (2130 - posrange[2][0]) / 50  
         else:
-            for i in range(16): posn[i] = (posrange[i][0] + posrange[i][1]) / 2
+            for i in range(16): posn[i] = 3 * posrange[i][1] / 4 + posrange[i][0] / 4
             posn[1] = posrange[1][0] + (50 - j % 50) * (2900 - posrange[1][0]) / 50
             posn[2] = posrange[2][0] + (50 - j % 50) * (2130 - posrange[2][0]) / 50        
             posn[3] = posrange[3][0] + (50 - j % 50) * (3270 - posrange[3][0]) / 50
+            # posn[15] = posrange[1][0] + (50 - j % 50) * (2900 - posrange[1][0]) / 50
+            # posn[13] = posrange[2][0] + (50 - j % 50) * (2130 - posrange[2][0]) / 50 
     
         #move: write pos
         for i in range(16):
