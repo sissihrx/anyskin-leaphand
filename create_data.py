@@ -11,13 +11,12 @@ from datetime import datetime
 import argparse
 import random
 
-random.seed(17)
 
 def get_baseline():
-        baseline_data = sensor_stream.get_data(num_samples=5)
-        baseline_data = np.array(baseline_data)[:, 1:]
-        baseline = np.mean(baseline_data, axis=0)
-        return baseline
+    baseline_data = sensor_stream.get_data(num_samples=5)
+    baseline_data = np.array(baseline_data)[:, 1:]
+    baseline = np.mean(baseline_data, axis=0)
+    return baseline
 
 
 if __name__ == "__main__":
@@ -34,7 +33,6 @@ if __name__ == "__main__":
             num_mags=20,
             port=args.port,
         )
-    # start sensor stream
     sensor_stream.start()
     time.sleep(1.0)
     filename = "fullmodeldata/moredatafull"
@@ -42,7 +40,6 @@ if __name__ == "__main__":
     time.sleep(0.1)
     baseline = get_baseline()
 
-    # addresses
     ADDR_PROFILE_VELOCITY = 112 
     ADDR_TORQUE_ENABLE = 64
     ADDR_GOAL_POSITION = 116
@@ -50,7 +47,7 @@ if __name__ == "__main__":
     DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     BAUDRATE = 3000000
     PORT = '/dev/ttyUSB0'  
-    THRESHOLD = 20
+    THRESHOLD = 30
 
     portHandler = PortHandler(PORT)
     packetHandler = PacketHandler(2.0)
@@ -62,7 +59,7 @@ if __name__ == "__main__":
         print("Failed to set baudrate")
         quit()
 
-    # enable torque
+    
     for i in range (16):
         dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 1)
         dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_PROFILE_VELOCITY, 60)
@@ -148,23 +145,19 @@ if __name__ == "__main__":
                 data1.append(sensor_data[x])
             for x in range(16): data1.append(actpos[x])
             data.append(np.array(data1))
-            # print(data)
+            
+        if j % 100 == 0:
+            data1 = np.array(data)
+            np.savetxt(f"{filename}.txt", data1)  
         last = posn.copy()
 
     print("moved")
-    if file is None:
-        sensor_stream.pause_streaming()
-        sensor_stream.join()
-        data = np.array(data)
-        print(data)
-        print(baseline)
-        np.savetxt(f"{filename}.txt", data)
+    sensor_stream.pause_streaming()
+    sensor_stream.join()
+    data = np.array(data)
+    np.savetxt(f"{filename}.txt", data)
 
-    print(data.shape)
 
-    # disable torque
     for i in range(16):
         packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 0)
-
-    # close port
     portHandler.closePort() 

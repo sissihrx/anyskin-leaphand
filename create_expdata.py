@@ -14,10 +14,10 @@ import random
 random.seed(10)
 
 def get_baseline():
-        baseline_data = sensor_stream.get_data(num_samples=5)
-        baseline_data = np.array(baseline_data)[:, 1:]
-        baseline = np.mean(baseline_data, axis=0)
-        return baseline
+    baseline_data = sensor_stream.get_data(num_samples=5)
+    baseline_data = np.array(baseline_data)[:, 1:]
+    baseline = np.mean(baseline_data, axis=0)
+    return baseline
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     BAUDRATE = 3000000
     PORT = '/dev/ttyUSB0'  # port 
-    THRESHOLD = 20
+    THRESHOLD = 30
 
     portHandler = PortHandler(PORT)
     packetHandler = PacketHandler(2.0)
