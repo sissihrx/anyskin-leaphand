@@ -172,6 +172,4 @@ if __name__ == "__main__":
     # disable torque
     for i in range(16):
         packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 0)
-
-    # close port
     portHandler.closePort() 

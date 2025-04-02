@@ -16,9 +16,11 @@ device = (
         else "cpu"
     )
 
-# inscale = torch.tensor([1922, 2902, 2597, 3897, 1891, 3998, 2104, 3099])
-# outscale = torch.tensor([64.8, 65.7, 185.37, 60, 71, 173, 67.5, 67.8, 182.46, 56.1, 72.6, 163.1, 63, 82, 208, 106, 67.8, 108, 97, 54, 97, 95, 113, 115, 95, 86, 95, 62, 123, 138])
-       
+    
+inscale = np.zeros(16)
+outscale = np.zeros(60)
+inscale = torch.tensor(inscale, dtype=torch.float32)
+outscale = torch.tensor(outscale, dtype=torch.float32)
 
 class TextDataset(Dataset):
     def __init__(self, file_path):
@@ -33,13 +35,17 @@ class TextDataset(Dataset):
         baseline = (self.outputs[0] + self.outputs[1] + self.outputs[2] + self.outputs[3] + self.outputs[4]) / 5
         self.outputs = self.outputs - baseline
         
-        # self.inputs = self.inputs / inscale
-        # self.outputs = self.outputs / outscale
-        print(self.outputs.max())
-        print(self.outputs.min())
+        if inscale[0] == 0:
+            for i in range(16):
+                inscale[i] = (max(abs(self.inputs.T[i].max()), abs(self.inputs.T[i].min())))
+            for i in range(60):
+                outscale[i] = (max(abs(self.outputs.T[i].max()), abs(self.outputs.T[i].min())))
+                   
+        self.inputs = self.inputs / inscale
+        self.outputs = self.outputs / outscale
         
-        self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
-        self.outputs = 2 * (self.outputs + 600) / 1200 - 1 #scale iwth -600 to 600, 1800 - 4000
+        # self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
+        # self.outputs = 2 * (self.outputs + 600) / 1200 - 1 #scale iwth -600 to 600, 1800 - 4000
         
 
     def __len__(self):
@@ -70,7 +76,7 @@ model = NeuralNetwork().to(device)
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.8)
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -102,7 +108,8 @@ def test(dataloader, model, loss_fn):
     pval = np.concatenate(pval, axis = 0)
 
     print(f"Test Error: \n Avg loss: {test_loss} \n")
-    return (pval + 1) * 1200 / 2 - 600
+    # return (pval + 1) * 1200 / 2 - 600
+    return pval * outscale.cpu().numpy()
 
 def gety(dataloader):
     yval = []
@@ -112,7 +119,7 @@ def gety(dataloader):
             y = y.cpu().numpy()
             yval.append(y)
     yval = np.concatenate(yval, axis = 0)
-    return (yval + 1) * 1200 / 2 - 600
+    return yval * outscale.cpu().numpy()
 
 
 
@@ -122,15 +129,22 @@ if __name__ == "__main__":
 
     train_dataloader = DataLoader(training_data, batch_size=100)
     test_dataloader = DataLoader(test_data, batch_size=100)
+
+    scales = np.zeros(76)
+    for i in range(16):
+        scales[i] = inscale[i]
+    for i in range(60):
+        scales[16+ i] = outscale[i]
+    np.savetxt("scale.txt", scales)
     
     print(gety(test_dataloader))
 
-    epochs = 50000
+    epochs = 10000
     for t in range(epochs):
         train(train_dataloader, model, loss_fn, optimizer)
         if (t % 50 == 0): test(test_dataloader, model, loss_fn)
 
-    torch.save(model.state_dict(), "fullmodel.pth") 
+    torch.save(model.state_dict(), "fullmodelscaled1.pth") 
 
     res = test(test_dataloader, model, loss_fn).T
     act = gety(test_dataloader).T

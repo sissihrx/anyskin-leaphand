@@ -30,7 +30,7 @@ ADDR_PRESENT_POSITION = 132
 DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 BAUDRATE = 3000000
 PORT = '/dev/ttyUSB0'  
-THRESHOLD = 20
+THRESHOLD = 30
 
 def get_baseline():
     baseline_data = sensor_stream.get_data(num_samples=5)
@@ -45,15 +45,19 @@ device = (
         if torch.backends.mps.is_available()
         else "cpu"
     )
-
+   
+inscale = np.zeros(16)
+outscale = np.zeros(60)
+inscale = torch.tensor(inscale, dtype=torch.float32)
 
 class TextDataset(Dataset):
     def __init__(self, data):
         self.data = torch.tensor(data, dtype=torch.float32)
-
         self.inputs = self.data[:, 60:]
         self.outputs = self.data[:, :60]
-        self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
+        # self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
+        self.inputs = self.inputs / inscale
+
         
     def __len__(self):
         return len(self.data)
@@ -82,7 +86,6 @@ model = NeuralNetwork().to(device)
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1)
 
 def test(dataloader, model, loss_fn):
     model.eval()
@@ -93,7 +96,8 @@ def test(dataloader, model, loss_fn):
             pred = model(X)
             pval.append(pred.cpu().numpy())
     pval = np.concatenate(pval, axis = 0)
-    return (pval + 1) / 2 * 1200 - 600
+    # return (pval + 1) / 2 * 1200 - 600
+    return pval * outscale
 
 def gety(dataloader):
     yval = []
@@ -120,10 +124,7 @@ if __name__ == "__main__":
             port=args.port,
         )
     sensor_stream.start()
-    time.sleep(1.0)
-    filename = "fullmodeldata/moredatafull"
-    pygame.init()
-    time.sleep(0.1)
+    time.sleep(3.0)
     baseline = get_baseline()
 
     rr.init("sensor_visualizer", spawn=True)
@@ -140,10 +141,74 @@ if __name__ == "__main__":
         quit()
     print("connected")
 
-    model.load_state_dict(torch.load("fullmodel.pth", map_location = 'cpu'))
+    model.load_state_dict(torch.load("fullmodelscaled.pth", map_location = 'cpu'))
+    scale = np.loadtxt("scale.txt")
+    for i in range(16): inscale[i] = scale[i]
+    for i in range(60): outscale[i] = scale[i + 16]
+    
+    #move fixed joints
+    posrange = np.array([[1918, 1918], #here
+                 [2400, 2900], #2000
+                 [1800, 2600],
+                 [2900, 3900],
+                 [2058, 2058], #here
+                 [2400, 2900], #
+                 [1800, 2600],
+                 [2900, 3900],
+                 [2155, 2155], #here
+                 [2400, 3100],
+                 [1900, 2400],
+                 [2000, 3000],
+                 [1884, 1884], #here
+                 [2100, 4000],
+                 [2100, 2100], #here
+                 [2200, 3100]
+        ])
+    for i in range (15):
+        if posrange[i][0] != posrange[i][1]: continue
+        dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 1)
+        dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_PROFILE_VELOCITY, 60)
+        if dxl_comm_result != COMM_SUCCESS:
+            print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+            quit()
+        elif dxl_error != 0:
+            print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+            quit()
+    
+    for i in range(15):
+        if posrange[i][0] != posrange[i][1]: continue
+        dxl_comm_result, dxl_error = packetHandler.write4ByteTxRx(portHandler, DXL_ID[i], ADDR_GOAL_POSITION, posrange[i][0])
+        if dxl_comm_result != COMM_SUCCESS:
+            print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+            failed = True
+        elif dxl_error != 0:
+            print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+           
+    b = False
+    while b == False:
+        b = True
+        for i in range(15):
+            if posrange[i][0] != posrange[i][1]: continue
+            dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
+            if dxl_comm_result != COMM_SUCCESS:
+                print(f"Communication failed: {packetHandler.getTxRxResult(dxl_comm_result)}")
+            elif dxl_error != 0:
+                print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
+            if abs(posrange[i][0] - dxl_present_position) > THRESHOLD:
+                b = False
 
-    while True:
+    print("moved")
+
+    shifta = np.zeros(60)
+    shiftb = np.zeros(60)
+    for k in range(1000):
         data = []
+        
+        # get sensor data
+        sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
+        sensor_data = sensor_data - baseline
+        for x in range(60): data.append(sensor_data[x])
+        
         for i in range(16):
             dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
             if dxl_comm_result != COMM_SUCCESS:
@@ -152,25 +217,32 @@ if __name__ == "__main__":
                 print(f"Error: {packetHandler.getRxPacketError(dxl_error)}")
             data.append(dxl_present_position)
         
-        # get sensor data
-        sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
-        sensor_data = sensor_data - baseline
-        for x in sensor_data: data.append(x)
+        data1 = []
+        data1.append(data)
 
-        t1 = TextDataset(data)
+        t1 = TextDataset(data1)
         td1 = DataLoader(t1, batch_size=1)
         a = gety(t1)
         b = test(t1, model, loss_fn)
-        ans = a - b
+        if k == 0:
+            shifta = a.copy()
+            shiftb = b.copy()
+        a = a - shifta
+        b = b - shiftb
+        ans = (a - b).copy()
         
-        for i in range(15):
-            rr.log(f"sensor_{i+1}", rr.Scalar(ans[i]))
+        
+        rr.log(f"predicted", rr.Scalar(b[2]))
+        rr.log(f"actual", rr.Scalar(a[2]))
+        rr.log(f"subtracted", rr.Scalar(ans[2]))
 
 
 
     
     sensor_stream.pause_streaming()
     sensor_stream.join()
+    
+    for i in range(16):
+        packetHandler.write1ByteTxRx(portHandler, DXL_ID[i], ADDR_TORQUE_ENABLE, 0)
 
-    # close port
     portHandler.closePort() 

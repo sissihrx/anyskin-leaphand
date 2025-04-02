@@ -99,30 +99,29 @@ def gety(dataloader):
 
 
 if __name__ == "__main__":
-    test_data = TextDataset("2fingermodel/2fmodeldata/0skin.txt")#503
+    test_data = TextDataset("2fingermodel/2fmodeldata/exp1.txt")#503
     test_dataloader = DataLoader(test_data, batch_size=100)
     
-    t1 = TextDataset("2fingermodel/2fmodeldata/exp1skin.txt")#503
+    t1 = TextDataset("2fingermodel/2fmodeldata/exp1oneskin.txt")#503
     td1 = DataLoader(t1, batch_size=100)
     
-    s1 = TextDataset("2fingermodel/2fmodeldata/1skinnocontact.txt")#503
-    ts1 = DataLoader(s1, batch_size=100)
+    act = TextDataset("2fingermodel/2fmodeldata/exp1act.txt")#503
+    actd = DataLoader(act, batch_size=100)
 
     model.load_state_dict(torch.load("2fingermodel/2fmodels/2fmodelmore.pth", map_location = 'cpu'))
     b = test(test_dataloader, model, loss_fn)
     a = gety(test_dataloader)
-    x = gety(ts1)
+    x = gety(td1)
+    actual = gety(actd).T
     
-    tr1 = gety(td1).T
-    
-    # diff = a - b
-    # ans = x + diff
-    # ans = ans.T
-    # a = a
-    print(b[0])
+    diff = a - b
+    ans = x + diff
+    ans = ans.T
     a = a.T
-    b = b - b[0]
+    # b = b - b[0]
+    print(b[0])
     b = b.T
+    
     
     
 
@@ -130,9 +129,9 @@ if __name__ == "__main__":
     n = 15
     for i in range(3):
         for j in range(5):
-            axes[i][j].plot(b[n], label = "1 skin", linestyle="--")
-            axes[i][j].plot(a[n], label = "2 skins", linestyle="-")
-            # axes[i][j].plot(ans[n], label = "predicted", linestyle="-.")
+            axes[i][j].plot(a[n], label = "2 skin", linestyle="-")
+            axes[i][j].plot(ans[n], label = "predicted", linestyle="-.")
+            axes[i][j].plot(actual[n], label = "actual", linestyle="--")
             n += 1
             plt.legend()
 

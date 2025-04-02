@@ -34,7 +34,7 @@ if __name__ == "__main__":
             port=args.port,
         )
     sensor_stream.start()
-    time.sleep(1.0)
+    time.sleep(3.0)
     filename = "fullmodeldata/moredatafull"
     pygame.init()
     time.sleep(0.1)
@@ -146,7 +146,7 @@ if __name__ == "__main__":
             for x in range(16): data1.append(actpos[x])
             data.append(np.array(data1))
             
-        if j % 100 == 0:
+        if j % 50 == 0:
             data1 = np.array(data)
             np.savetxt(f"{filename}.txt", data1)  
         last = posn.copy()

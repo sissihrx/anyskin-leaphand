@@ -15,9 +15,9 @@ device = (
         else "cpu"
     )
 
-# inscale = torch.tensor([1922, 2902, 2597, 3897, 1891, 3998, 2104, 3099])
-# outscale = torch.tensor([64.8, 65.7, 185.37, 60, 71, 173, 67.5, 67.8, 182.46, 56.1, 72.6, 163.1, 63, 82, 208, 106, 67.8, 108, 97, 54, 97, 95, 113, 115, 95, 86, 95, 62, 123, 138])
-        
+inscale = np.zeros(16)
+outscale = np.zeros(60)
+inscale = torch.tensor(inscale, dtype=torch.float32)    
 
 class TextDataset(Dataset):
     def __init__(self, file_path):
@@ -32,11 +32,11 @@ class TextDataset(Dataset):
         baseline = (self.outputs[0] + self.outputs[1] + self.outputs[2] + self.outputs[3] + self.outputs[4]) / 5
         self.outputs = self.outputs - baseline
         
-        # self.inputs = self.inputs / inscale
+        self.inputs = self.inputs / inscale
         # self.outputs = self.outputs / outscale
         
-        self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
-        self.outputs = 2 * (self.outputs + 600) / 1200 - 1 #scale iwth -600 to 600, 1800 - 4000
+        # self.inputs = 2 * (self.inputs - 1800) / (4000 - 1800) - 1 
+        # self.outputs = 2 * (self.outputs + 600) / 1200 - 1 #scale iwth -600 to 600, 1800 - 4000
         
     def __len__(self):
         return len(self.data)
@@ -84,8 +84,9 @@ def test(dataloader, model, loss_fn):
     pval = np.concatenate(pval, axis = 0)
 
     print(f"Test Error: \n Avg loss: {test_loss} \n")
-    return (pval + 1) / 2 * 1200 - 600
-    # return pval * np.array(outscale)
+    # return (pval + 1) / 2 * 1200 - 600
+    print(pval)
+    return pval * np.array(outscale)
 
 def gety(dataloader):
     yval = []
@@ -95,18 +96,25 @@ def gety(dataloader):
             y = y.cpu().numpy()
             yval.append(y)
     yval = np.concatenate(yval, axis = 0)
-    return (yval + 1) / 2 * 1200 - 600
+    # return (yval + 1) / 2 * 1200 - 600
+    return yval
 
 
 
 if __name__ == "__main__":
-    test_data = TextDataset("fullmodeldata/fullnocontact.txt")
+    
+    scale = np.loadtxt("scale.txt")
+    for i in range(16): inscale[i] = scale[i]
+    for i in range(60): outscale[i] = scale[i + 16]
+    
+    test_data = TextDataset("fullmodeldata/fullnocontact3.txt")
     test_dataloader = DataLoader(test_data, batch_size=100)
     
-    t1 = TextDataset("fullmodeldata/fullnocontact.txt")
+    t1 = TextDataset("fullmodeldata/fullnocontact2.txt")
     td1 = DataLoader(t1, batch_size=100)
 
-    model.load_state_dict(torch.load("fullmodel.pth", map_location = 'cpu'))
+    model.load_state_dict(torch.load("fullmodelscaled.pth", map_location = 'cpu'))
+    
     b = test(test_dataloader, model, loss_fn)
     a = gety(test_dataloader)
     
@@ -116,24 +124,30 @@ if __name__ == "__main__":
     # ans = x + diff
     # ans = ans.T
     
+    # print(outscale)
     a = a.T
+    b -= b[0]
     b = b.T
-    print(b[0])
+    a1 = gety(td1)
+    a1 = a1.T
+    # print(b[0])
     
     fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7))
-    n = 30
+    n = 15
     for i in range(3):
         for j in range(5):
             axes[i][j].plot(b[n], label = "predicted", linestyle="--")
             axes[i][j].plot(a[n], label = "actual", linestyle="-")
-            # axes[i][j].plot(tr1[n], label = "predicted", linestyle="-.")
+            # axes[i][j].plot(a1[n], label = "actual sample 2", linestyle="-.")
             n += 1
             plt.legend()
 
     fig.canvas.draw()
+    n = 15
     for i in range(3):
         for j in range(5):
-            axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -30), max(axes[i][j].get_ylim()[1], 30))
+            axes[i][j].set_ylim(min(axes[i][j].get_ylim()[0], -1 * outscale[n]), max(axes[i][j].get_ylim()[1], -1 * outscale[n]))
+            n += 1
 
     plt.tight_layout()
     plt.savefig("img")

@@ -35,8 +35,8 @@ if __name__ == "__main__":
             port=args.port,
         )
     sensor_stream.start()
-    time.sleep(1.0)
-    filename = "fullnocontact"
+    time.sleep(3.0)
+    filename = "fullnocontact2"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     DXL_ID = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
     BAUDRATE = 3000000
     PORT = '/dev/ttyUSB0'  # port 
-    THRESHOLD = 30
+    THRESHOLD = 20
 
     portHandler = PortHandler(PORT)
     packetHandler = PacketHandler(2.0)
@@ -100,12 +100,12 @@ if __name__ == "__main__":
             posn = firstpos
             print(posn)
         elif j % 100 < 50:
-            for i in range(16): posn[i] = 3 * posrange[i][1] / 4 + posrange[i][0] / 4
+            for i in range(16): posn[i] = posrange[i][1] / 2 + posrange[i][0] / 2
             posn[1] = posrange[1][0] + (j % 50) * (2900 - posrange[1][0]) / 50
             posn[2] = posrange[2][0] + (j % 50) * (2130 - posrange[2][0]) / 50        
             posn[3] = posrange[3][0] + (j % 50) * (3270 - posrange[3][0]) / 50
         else:
-            for i in range(16): posn[i] = 3 * posrange[i][1] / 4 + posrange[i][0] / 4
+            for i in range(16): posn[i] = posrange[i][1] / 2 + posrange[i][0] / 2
             posn[1] = posrange[1][0] + (50 - j % 50) * (2900 - posrange[1][0]) / 50
             posn[2] = posrange[2][0] + (50 - j % 50) * (2130 - posrange[2][0]) / 50        
             posn[3] = posrange[3][0] + (50 - j % 50) * (3270 - posrange[3][0]) / 50
