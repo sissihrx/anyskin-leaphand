@@ -93,17 +93,18 @@ if __name__ == "__main__":
 
     data = []
     data_len = 3000000
-    for j in range(3000):
+    for j in range(5000):
         posn = np.zeros(16).astype(int)
-        steps = 40
+        steps = 20
         for i in range(16):
             posn[i] = random.randint(posrange[i][0], posrange[i][1])
         if j < 5: 
-            posn = firstpos
+            posn = firstpos.copy()
             steps = 1
         
         print(j)
         for k in range(steps):
+            print(posn)
             #move: write pos
             failed = True
             while failed == True:
@@ -143,9 +144,9 @@ if __name__ == "__main__":
 
             for i in range(16):
                 dir = np.array([-1, 1])
-                if (posn[i] + 20 * dir > posrange[i][1]): dir[1] = -1
-                if (posn[i] - 20 * dir < posrange[i][0]): dir[0] = 1
-                posn[i] += dir[random.randint(0, 1)] * 20
+                if (posn[i] + 30 > posrange[i][1]): dir[1] = 0
+                if (posn[i] - 30 < posrange[i][0]): dir[0] = 0
+                posn[i] += dir[random.randint(0, 1)] * 30
             
         if j % 2 == 0:
             data1 = np.array(data)
