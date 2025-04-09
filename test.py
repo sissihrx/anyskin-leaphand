@@ -16,6 +16,10 @@ p.setCollisionFilterPair(robot_id, robot_id, -1, 15, enableCollision=1)
 p.setCollisionFilterPair(robot_id, robot_id, -1, 14, enableCollision=1)
 p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=1)
 
+aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
+z = aabb_max[2]
+plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.01], useFixedBase = True)
+
 positions = np.loadtxt("positions.txt")
 data = []
 for i in range(len(positions)):
@@ -33,9 +37,9 @@ for i in range(len(positions)):
         #     pos = c[5]
         #     end = [pos[0], pos[1], pos[2] + 0.2]  
         #     line_id = p.addUserDebugLine(pos, end, [1, 0, 0], lineWidth=5, lifeTime=1)
-        #     print(f" Link {c[3]} (vs) Link {c[4]}")
+        #     print(f" Link {c[1]} (vs) Link {c[2]}")
     else:
         data.append(positions[i])
 
 p.disconnect()
-np.savetxt("positions.txt", data)
+np.savetxt("positionsnew.txt", data)
