@@ -36,13 +36,13 @@ for i in range(1000000):
     for j in range(16):
         joint_info = p.getJointInfo(robot_id, j)
         if j == 3: 
-            if i % 2 == 0: a = joint_info[8]
+            if i % 2 == 0: a = 0.85
             else: a = joint_info[9]
         else: a = 0
         p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=a, force=1000)
     for _ in range(240): 
         p.stepSimulation()
-        time.sleep(1/2400)
+        time.sleep(1/1000)
     
     good = True
     for j in range(16):

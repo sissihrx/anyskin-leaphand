@@ -4,7 +4,7 @@ import time
 import random
 import numpy as np
 
-p.connect(p.DIRECT)
+p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, 0)
 
@@ -18,9 +18,9 @@ p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=1)
 
 aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
 z = aabb_max[2]
-plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.01], useFixedBase = True)
+# plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.01], useFixedBase = True)
 
-positions = np.loadtxt("positions.txt")
+positions = np.loadtxt("positionsnew.txt")
 data = []
 for i in range(len(positions)):
     for j in range(16):
