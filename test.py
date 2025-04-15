@@ -4,7 +4,7 @@ import time
 import random
 import numpy as np
 
-p.connect(p.GUI)
+p.connect(p.DIRECT)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, 0)
 
@@ -18,28 +18,29 @@ p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=1)
 
 aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
 z = aabb_max[2]
-# plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.01], useFixedBase = True)
+plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.01], useFixedBase = True)
 
-positions = np.loadtxt("positionsnew.txt")
+positions = np.loadtxt("positionstr.txt")
 data = []
-for i in range(len(positions)):
-    for j in range(16):
-        joint_info = p.getJointInfo(robot_id, j)
-        a = positions[i][j] * (joint_info[9] - joint_info[8]) + joint_info[8]
-        p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=a, force=1000)
-    for _ in range(240): 
-        p.stepSimulation()
+for i in range(1, len(positions)):
+    ok = True
+    for k in range(1, 51):
+        for j in range(16):
+            joint_info = p.getJointInfo(robot_id, j)
+            a = positions[i][j] * (joint_info[9] - joint_info[8]) + joint_info[8]
+            last = positions[i-1][j] * (joint_info[9] - joint_info[8]) + joint_info[8]
+            a = last + (a - last) * k / 50
+            p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=a, force=10)
+        for _ in range(240): 
+            p.stepSimulation()
 
-    self_collisions = p.getContactPoints(bodyA=robot_id, bodyB=robot_id)
-    if self_collisions:
-        print(i)
-        # for c in self_collisions:
-        #     pos = c[5]
-        #     end = [pos[0], pos[1], pos[2] + 0.2]  
-        #     line_id = p.addUserDebugLine(pos, end, [1, 0, 0], lineWidth=5, lifeTime=1)
-        #     print(f" Link {c[1]} (vs) Link {c[2]}")
-    else:
+        self_collisions = p.getContactPoints(bodyA=robot_id, bodyB=robot_id)
+        self_collisions1 = p.getContactPoints(bodyA=robot_id, bodyB=plane)
+        if self_collisions or self_collisions1:
+            ok = False
+    if ok == True:
         data.append(positions[i])
+    else: print(i)
 
 p.disconnect()
-np.savetxt("positionsnew.txt", data)
+np.savetxt("positionstr.txt", data)
