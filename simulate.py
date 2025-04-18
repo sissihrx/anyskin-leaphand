@@ -21,7 +21,7 @@ p.setCollisionFilterPair(robot_id, robot_id, 4, 6, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 8, 10, enableCollision=0)
 aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
 z = aabb_max[2]
-plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.017], useFixedBase = True)
+plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.015], useFixedBase = True)
 
 positions = []
 for i in range(2000000):
