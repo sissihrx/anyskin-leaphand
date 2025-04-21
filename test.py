@@ -25,7 +25,7 @@ aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
 z = aabb_max[2]
 plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.017], useFixedBase = True)
 
-positions = np.loadtxt("positions.txt")
+positions = np.loadtxt("positionsnew.txt")
 data = []
 for i in range(len(positions)):
     ok = True
@@ -46,10 +46,10 @@ for i in range(len(positions)):
     else:
         print(i)
 
-    if i % 50 == 0:
-        np.savetxt("positionsnew.txt", np.array(data))
+    # if i % 50 == 0:
+    #     np.savetxt("positionsnew.txt", np.array(data))
 
 p.disconnect()
-np.savetxt("positionsnew.txt", np.array(data))
+# np.savetxt("positionsnew.txt", np.array(data))
 
 #low limit for 12 is-1.8
