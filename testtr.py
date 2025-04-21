@@ -4,7 +4,7 @@ import time
 import random
 import numpy as np
 
-p.connect(p.GUI)
+p.connect(p.DIRECT)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, 0)
 p.resetDebugVisualizerCamera(
@@ -19,6 +19,9 @@ p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 0, 2, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 4, 6, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 8, 10, enableCollision=0)
+aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
+z = aabb_max[2]
+plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.012], useFixedBase = True)
 
 positions = np.loadtxt("positionstr.txt")
 data = []
@@ -28,14 +31,14 @@ for i in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=i, co
 
 for i in range(1, len(positions)):
     # if i % 50 == 0: np.savetxt("positionstr1.txt", np.array(data))
-    for k in range(1, 2):
+    for k in range(1, 31):
         curr = []
         for j in range(16):
             joint_info = p.getJointInfo(robot_id, j)
             curr.append(positions[i][j])
             a = positions[i][j] * (joint_info[9] - joint_info[8]) + joint_info[8]
             prev = last[j] * (joint_info[9] - joint_info[8]) + joint_info[8]
-            a = prev + (a - prev) * k / 1
+            a = prev + (a - prev) * k / 30
             p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=a, force=100)
         for _ in range(240): 
             # time.sleep(1/2000)
@@ -47,6 +50,7 @@ for i in range(1, len(positions)):
         #     for x in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=last[x], force=100)
         #     data.append(last)
         #     break
+        # print(i)
         if self_collisions:            
             for x in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=last[x], force=100)
             print(i)
