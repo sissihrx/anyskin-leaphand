@@ -34,6 +34,7 @@ class TextDataset(Dataset):
         self.outputs = self.data[:, :60]
         baseline = (self.outputs[0] + self.outputs[1] + self.outputs[2] + self.outputs[3] + self.outputs[4]) / 5
         self.outputs = self.outputs - baseline
+        print(self.outputs[0])
         
         if inscale[0] == 0:
             for i in range(16):
@@ -124,8 +125,8 @@ def gety(dataloader):
 
 
 if __name__ == "__main__":
-    training_data = TextDataset("fullmodeldata/moredatafull.txt")
-    test_data = TextDataset("fullmodeldata/moredatafull.txt")
+    training_data = TextDataset("fullmodeldata/pbdata.txt")
+    test_data = TextDataset("fullmodeldata/pbdata.txt")
 
     train_dataloader = DataLoader(training_data, batch_size=100)
     test_dataloader = DataLoader(test_data, batch_size=100)
@@ -135,7 +136,7 @@ if __name__ == "__main__":
         scales[i] = inscale[i]
     for i in range(60):
         scales[16+ i] = outscale[i]
-    np.savetxt("scale.txt", scales)
+    np.savetxt("pbscale.txt", scales)
     
     print(gety(test_dataloader))
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         train(train_dataloader, model, loss_fn, optimizer)
         if (t % 50 == 0): test(test_dataloader, model, loss_fn)
 
-    torch.save(model.state_dict(), "fullmodelscaled1.pth") 
+    torch.save(model.state_dict(), "pbmodel.pth") 
 
     res = test(test_dataloader, model, loss_fn).T
     act = gety(test_dataloader).T
