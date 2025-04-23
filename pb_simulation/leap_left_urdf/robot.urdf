@@ -49,7 +49,7 @@
 <visual>
 <origin xyz="0.0096433630922713314826 0.00029999999999999471534 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 <material name="pip_material">
 <color rgba="0.74901960784313725839 0.74901960784313725839 0.74901960784313725839 1.0"/>
@@ -58,7 +58,7 @@
 <collision>
 <origin xyz="0.0096433630922713314826 0.00029999999999999471534 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 </collision>
 <inertial>
@@ -93,18 +93,18 @@
 
 <link name="fingertip">
 <visual>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 <material name="fingertip_material">
 <color rgba="0.86666666666666669627 0.86666666666666669627 0.050980392156862744391 1.0"/>
 </material>
 </visual>
 <collision>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 </collision>
 <inertial>
@@ -177,7 +177,7 @@
 <visual>
 <origin xyz="0.0096433630922713314826 0.00029999999999998777644 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 <material name="pip_material">
 <color rgba="0.74901960784313725839 0.74901960784313725839 0.74901960784313725839 1.0"/>
@@ -186,7 +186,7 @@
 <collision>
 <origin xyz="0.0096433630922713314826 0.00029999999999998777644 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 </collision>
 <inertial>
@@ -221,18 +221,18 @@
 
 <link name="fingertip_2">
 <visual>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 <material name="fingertip_material">
 <color rgba="0.86666666666666669627 0.86666666666666669627 0.050980392156862744391 1.0"/>
 </material>
 </visual>
 <collision>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 </collision>
 <inertial>
@@ -306,7 +306,7 @@
 <visual>
 <origin xyz="0.0096433630922713314826 0.00029999999999999124589 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 <material name="pip_material">
 <color rgba="0.74901960784313725839 0.74901960784313725839 0.74901960784313725839 1.0"/>
@@ -315,7 +315,7 @@
 <collision>
 <origin xyz="0.0096433630922713314826 0.00029999999999999124589 0.00078403401041737472155" rpy="-1.570796326794896558 -1.570796326794896336 0" />
 <geometry>
-<mesh filename="package:///pip.stl"/>
+<mesh filename="package:///pip.stl" scale = "1 1 1.15"/>
 </geometry>
 </collision>
 <inertial>
@@ -350,18 +350,18 @@
 
 <link name="fingertip_3">
 <visual>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 <material name="fingertip_material">
 <color rgba="0.86666666666666669627 0.86666666666666669627 0.050980392156862744391 1.0"/>
 </material>
 </visual>
 <collision>
-<origin xyz="-0.115 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
+<origin xyz="-0.125 -0.04 0.015" rpy="3.141592653589793116 0 1.570796" />
 <geometry>
-<mesh filename="package:///leap_anyskin.stl" scale = "0.00098 0.00094 0.00097"/>
+<mesh filename="package:///leap_anyskin.stl" scale = "0.001 0.00097 0.001"/>
 </geometry>
 </collision>
 <inertial>
