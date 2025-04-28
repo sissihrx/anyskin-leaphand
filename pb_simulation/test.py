@@ -4,7 +4,7 @@ import time
 import random
 import numpy as np
 
-p.connect(p.DIRECT)
+p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, 0)
 p.resetDebugVisualizerCamera(
@@ -15,8 +15,7 @@ p.resetDebugVisualizerCamera(
 )
 
 
-# robot_id = p.loadURDF("leap_left_urdf/robot.urdf", useFixedBase=True, flags = (p.URDF_USE_SELF_COLLISION))
-robot_id = p.loadURDF("leap_left_urdf/robot.urdf", useFixedBase=True)
+robot_id = p.loadURDF("leap_left_urdf/robot.urdf", useFixedBase=True, flags = (p.URDF_USE_SELF_COLLISION))
 p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 0, 2, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 4, 6, enableCollision=0)
@@ -35,7 +34,7 @@ for i in range(len(positions)):
         p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=a, force=100)
         if j == 12 and a < -1.8: ok = False
     for _ in range(240): 
-        time.sleep(1/2000)
+        # time.sleep(1/2000)
         p.stepSimulation()
 
     self_collisions = p.getContactPoints(bodyA=robot_id, bodyB=robot_id)

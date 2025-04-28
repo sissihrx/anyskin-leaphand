@@ -30,7 +30,7 @@ last = positions[0]
 for i in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=i, controlMode=p.POSITION_CONTROL, targetPosition=positions[0][i], force=100)
 
 for i in range(1, len(positions)):
-    # if i % 50 == 0: np.savetxt("positionstr1.txt", np.array(data))
+    if i % 50 == 0: np.savetxt("positionstr.txt", np.array(data))
     for k in range(1, 31):
         curr = []
         for j in range(16):
@@ -62,4 +62,4 @@ for i in range(1, len(positions)):
 
 
 p.disconnect()
-# np.savetxt("positionstr1.txt", np.array(data))
+np.savetxt("positionstr.txt", np.array(data))
