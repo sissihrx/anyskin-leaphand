@@ -35,7 +35,7 @@ if __name__ == "__main__":
         )
     sensor_stream.start()
     time.sleep(3.0)
-    filename = "fullmodeldata/pbdata"
+    filename = "fullmodeldata/pbdata2"
     pygame.init()
     time.sleep(0.1)
     baseline = get_baseline()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # flipped small/large: 12, 8, 4, 0
     
     firstpos = np.array([1918, 2662, 2427, 3886, 2058, 2595, 2010, 3600, 2155, 2536, 2250, 2444, 1884, 3466, 2100, 2594])
-    positions = np.loadtxt("positionstr.txt")
+    positions = np.loadtxt("pb_simulation/positionstr.txt")
     
     temp = positions.T
     temp1 = temp[0].copy()
@@ -119,17 +119,16 @@ if __name__ == "__main__":
     data_len = 3000000
     last = np.zeros(16).astype(int)
     broken = False
-    for j in range(10000):
+    for j in range(3000):
         maxi = 30
         posn = last.copy()
         for i in range(16):
-            posn[i] = positions[j-5][i]
+            posn[i] = positions[j+3000][i]
             if (j >= 5): maxi = max(maxi, abs(last[i] - posn[i]))
         if j < 5: posn = firstpos
         
         if broken == True: break
         num = int(maxi / 30)
-        # num = 1
         print(j)
         for k in range(1, num + 1):
             pos = np.zeros(16).astype(int)
@@ -156,7 +155,9 @@ if __name__ == "__main__":
             
             b = False
             actpos = pos.copy()
+            count = 0
             while b == False:
+                count += 1
                 b = True
                 for i in range(16):
                     dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read4ByteTxRx(portHandler, DXL_ID[i], ADDR_PRESENT_POSITION)
@@ -171,6 +172,7 @@ if __name__ == "__main__":
                         # print(i)
                         b = False
                 if broken == True: break
+                if count > 100: broken = True 
 
             if broken == True: break
             # get sensor data
@@ -182,7 +184,7 @@ if __name__ == "__main__":
             for x in range(16): data1.append(actpos[x])
             data.append(np.array(data1))
             
-        if j % 1 == 0:
+        if j % 30 == 0:
             data1 = np.array(data)
             np.savetxt(f"{filename}.txt", data1)  
         last = posn.copy()
