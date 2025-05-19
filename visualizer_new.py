@@ -147,7 +147,7 @@ if __name__ == "__main__":
     for k in range(1000):
         data = []
         
-        # get sensor data
+        # get 1 line of sensor data and store in data1
         sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
         sensor_data = sensor_data - baseline
         for x in range(60): data.append(sensor_data[x])
@@ -163,6 +163,7 @@ if __name__ == "__main__":
         data1 = []
         data1.append(data)
 
+        #get predicted vs actual for this position
         t1 = TextDataset(np.array(data1))
         td1 = DataLoader(t1, batch_size=1)
         a = gety(t1)
@@ -171,6 +172,7 @@ if __name__ == "__main__":
         b = np.exp(b)
         b = b - 1308.9 - 1000
         
+        #subtract a baseline so that a_0 = 0, b_0 = 0, a - b should be 0
         if k == 0:
             shifta = a.copy()
             shiftb = b.copy()
@@ -182,8 +184,6 @@ if __name__ == "__main__":
         rr.log(f"predicted", rr.Scalar(b[16]))
         rr.log(f"actual", rr.Scalar(a[16]))
         rr.log(f"subtracted", rr.Scalar(ans[16]))
-
-
 
     
     sensor_stream.pause_streaming()

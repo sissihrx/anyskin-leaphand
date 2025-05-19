@@ -105,14 +105,8 @@ if __name__ == "__main__":
     a = gety(test_dataloader)
     full = np.loadtxt("fullmodeldata/subfixed.txt")
     
-    # maxi = []
-    # for i in range(1, len(full)):
-    #     curr = abs(full[i] - full[i-1])
-    #     # maxi = max(maxi, max(curr))
-    #     for j in range(60): maxi.append(curr[j])
-
     
-    # # filter data
+    # # filter data based on difference array threshold < 350
     # ind = []
     # i = 1
     # while (i < len(full)):
@@ -126,7 +120,7 @@ if __name__ == "__main__":
     # np.savetxt("fullmodeldata/subfixed.txt", np.array(data))
     
     
-    # #subtract and log
+    # #subtract baseline or normalize with log
     # # a = a - (a[0] + a[1] + a[2] + a[3] + a[4]) / 5
     # print(np.amin(a))
     # a = a - np.amin(a) + 1000
@@ -144,6 +138,7 @@ if __name__ == "__main__":
     a = a.T
     # data = np.array(data).T
     
+    #plot data
     fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7))
     n = 30
     for i in range(3):

@@ -105,6 +105,7 @@ if __name__ == "__main__":
     b = test(test_dataloader, model, loss_fn)
     a = gety(test_dataloader)
 
+    #a is actual, b is predicted, unnormalize b and subtract baseline from a 
     a = a - (a[0] + a[1] + a[2] + a[3] + a[4]) / 5
     # b = b + 7
     b = b + 8
@@ -116,7 +117,8 @@ if __name__ == "__main__":
     b = b[2000:3000, :]
     a = a.T
     b = b.T
-       
+    
+    #plot pred vs actual
     fig, axes = plt.subplots(nrows=3, ncols=5, figsize=(15, 7))
     n = 15
     for i in range(3):

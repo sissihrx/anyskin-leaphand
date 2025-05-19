@@ -14,6 +14,7 @@ p.resetDebugVisualizerCamera(
     cameraTargetPosition=[0, 0, 0.5]
 )
 
+#turn on self collisions and off adjacent collisions
 robot_id = p.loadURDF("leap_left_urdf/robot.urdf", useFixedBase=True, flags = (p.URDF_USE_SELF_COLLISION))
 p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 0, 2, enableCollision=0)
@@ -29,8 +30,10 @@ data.append(positions[0])
 last = positions[0]
 for i in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=i, controlMode=p.POSITION_CONTROL, targetPosition=positions[0][i], force=100)
 
+#go through list of good positions
 for i in range(1, len(positions)):
     if i % 50 == 0: np.savetxt("positionstr.txt", np.array(data))
+    #break into 30 intermediate steps between two positions, move to intermediate positions
     for k in range(1, 31):
         curr = []
         for j in range(16):
@@ -51,6 +54,8 @@ for i in range(1, len(positions)):
         #     data.append(last)
         #     break
         # print(i)
+
+        #if there is a collision on the trajectory move back to last good position and throw out current position
         if self_collisions:            
             for x in range(16): p.setJointMotorControl2(bodyIndex=robot_id, jointIndex=j, controlMode=p.POSITION_CONTROL, targetPosition=last[x], force=100)
             print(i)

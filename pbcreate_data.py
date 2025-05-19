@@ -95,6 +95,7 @@ if __name__ == "__main__":
     firstpos = np.array([1918, 2662, 2427, 3886, 2058, 2595, 2010, 3600, 2155, 2536, 2250, 2444, 1884, 3466, 2100, 2594])
     positions = np.loadtxt("pb_simulation/positionstr.txt")
     
+    #translate positions from normalized 0-1 to the range of joints, fix flipped angles in pb simulation
     temp = positions.T
     temp1 = temp[0].copy()
     temp[0] = temp[1].copy()
@@ -119,17 +120,20 @@ if __name__ == "__main__":
     data_len = 3000000
     last = np.zeros(16).astype(int)
     broken = False
+    #go through 3000 positions
     for j in range(3000):
         maxi = 30
         posn = last.copy()
         for i in range(16):
-            posn[i] = positions[j+3000][i]
+            #first 5 positions go to P_0, otherwise go to specified position in list
+            posn[i] = positions[j+3000][i] #this is from position 3000 to 6000
             if (j >= 5): maxi = max(maxi, abs(last[i] - posn[i]))
         if j < 5: posn = firstpos
         
         if broken == True: break
         num = int(maxi / 30)
         print(j)
+        #break into intermediate positions from last, move
         for k in range(1, num + 1):
             pos = np.zeros(16).astype(int)
             for i in range(16):
@@ -175,7 +179,7 @@ if __name__ == "__main__":
                 if count > 100: broken = True 
 
             if broken == True: break
-            # get sensor data
+            # get sensor data and save
             data1 = []
             sensor_data = sensor_stream.get_data(num_samples=1)[0][1:]
             sensor_data = sensor_data - baseline

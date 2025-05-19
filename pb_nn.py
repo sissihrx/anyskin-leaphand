@@ -16,10 +16,11 @@ device = (
         else "cpu"
     )
 
-
+#inscale = max of inputs magnitude
 inscale = np.zeros(16)
 inscale = torch.tensor(inscale, dtype=torch.float32)
 
+#takes dataset as txt file
 class TextDataset(Dataset):
     def __init__(self, file_path):
         self.data = []
@@ -34,7 +35,8 @@ class TextDataset(Dataset):
         if inscale[0] == 0:
             for i in range(16):
                 inscale[i] = (max(abs(self.inputs.T[i].max()), abs(self.inputs.T[i].min())))
-                   
+
+        #scale inputs by dividing by max magnitude, leave outputs alone
         self.inputs = self.inputs / inscale
 
     def __len__(self):
@@ -117,6 +119,7 @@ if __name__ == "__main__":
     train_dataloader = DataLoader(training_data, batch_size=100)
     test_dataloader = DataLoader(test_data, batch_size=100)
 
+    #save the scales used in this model
     np.savetxt("pbscalefixed.txt", np.array(inscale))
     
     print(gety(test_dataloader))

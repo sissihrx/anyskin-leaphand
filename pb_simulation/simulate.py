@@ -14,6 +14,7 @@ p.resetDebugVisualizerCamera(
     cameraTargetPosition=[0, 0, 0.5]
 )
 
+#turn on self collisions and turn off collisions between directly adjacent links
 robot_id = p.loadURDF("leap_left_urdf/robot.urdf", useFixedBase=True, flags = (p.URDF_USE_SELF_COLLISION))
 p.setCollisionFilterPair(robot_id, robot_id, -1, 13, enableCollision=0)
 p.setCollisionFilterPair(robot_id, robot_id, 0, 2, enableCollision=0)
@@ -23,10 +24,12 @@ aabb_min, aabb_max = p.getAABB(robot_id, linkIndex=-1)
 z = aabb_max[2]
 plane = p.loadURDF("plane.urdf", basePosition=[0, 0, z + 0.015], useFixedBase = True)
 
+#simulate random positions
 positions = []
 for i in range(2000000):
     pos = []
     print(i)
+    #command to a random joint angle
     for j in range(16):
         joint_info = p.getJointInfo(robot_id, j)
         a = random.uniform(joint_info[8], joint_info[9])
@@ -34,6 +37,7 @@ for i in range(2000000):
     for _ in range(240): 
         p.stepSimulation()
     
+    #normalize the current joint angles between 0 and 1
     good = True
     for j in range(16):
         joint_state = p.getJointState(robot_id, j)
@@ -41,6 +45,7 @@ for i in range(2000000):
         angle = (joint_state[0] - joint_info[8]) / (joint_info[9] - joint_info[8]) # scale 0 and 1
         pos.append(angle)
 
+    #check if there is a collision and add to list if none
     self_collisions = p.getContactPoints(bodyA=robot_id, bodyB=robot_id)
     self_collisions1 = p.getContactPoints(bodyA=robot_id, bodyB=plane)
     if self_collisions or self_collisions1:
